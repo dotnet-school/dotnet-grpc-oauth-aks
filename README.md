@@ -172,4 +172,107 @@ docker run -p 5001:80 grpc-server
   docker push nishants/grpc-server:v0.1 
   ```
 
+  **Login to docker hub and ensure that images are public**
+
+  
+
+- Create manifest for web-server in `WebServer/k8s.yml`
+
+  ```yaml
+  # This part creates a load balancer pod that receives traffic from
+  # internet and load-balances to our pods
+  apiVersion: v1
+  kind: Service
+  metadata:
+    name: web-server-service
+  spec:
+    selector:
+      app: web-server     # This makes load balancer point to web-server deployment
+    ports:
+      - port: 80
+        targetPort: 80  # The port our container(in pods) listens to
+    type: LoadBalancer
+  ---
+  # This part creates a pod that runs our docker image
+  apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    name: web-server
+  spec:
+    # Keep two replicas of our app
+    replicas: 2
+    selector:
+      matchLabels:
+        app: web-server
+    template:
+      metadata:
+        labels:
+          app: web-server
+      spec:
+        containers:
+          - name: web-server
+            image: nishants/web-server:v0.1  # Our docker image on docker hub
+            ports:
+              - containerPort: 80           # Port that our app listens to
+            env:
+              - name: GrpcServer
+                value: http://grpc-server-service:5001
+            imagePullPolicy: Always
+  ```
+
+  
+
+- Create manigest for grpc server in `GrpcServer/k8s.yml`
+
+  ```yaml
+  apiVersion: v1
+  kind: Service
+  metadata:
+    name: grpc-server-service   # Name of service (we use this as domain in todo-app config)
+  spec:
+    selector:
+      app: grpc-server       # Exposes stream-web-app as service
+    ports:
+      - port: 5001
+        targetPort: 80 # Map service port to container port
+  ---
+  apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    name: grpc-server-deployment     # Name of deployment, we wil refer this in service
+  spec:
+    replicas: 2
+    selector:
+      matchLabels:
+        app: grpc-server
+    template:
+      metadata:
+        labels:
+          app: grpc-server
+      spec:
+        containers:
+          - name: grpc-server
+            image: nishants/grpc-server:v0.1   # Image name for stream-web-app container
+            ports:
+              - containerPort: 80
+  ```
+
+
+
+- Create a local cluster 
+
+  ```bash
+  # Start a single node cluster locally
+  minikube start
+  
+  # Check our local cluster
+  kubectl cluster-info
+  
+  kubectl apply -f GrpcServer/k8s.yml
+  kubectl apply -f WebServer/k8s.yml
+  
+  # Check configuration 
+  minikube service web-server-service
+  ```
+
   
