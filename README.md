@@ -1,3 +1,10 @@
+Todo
+
+- [x] Create client and server as docker containers
+- [ ] Create minikube local cluster
+- [ ] Deploy on AKS
+- [ ] Add OAuth 
+
 
 
 - Create project
@@ -148,3 +155,21 @@ docker run -p 5001:80 grpc-server
 
   
 
+### Create kuberntes cluster
+
+- Push images to docker registry 
+
+  ```bash
+  # Login to docker hub
+  docker login
+  
+  # Replace nishants with your dockerhub user name
+  
+  docker tag web-server nishants/web-server:v0.1 
+  docker push nishants/web-server:v0.1 
+  
+  docker tag grpc-server nishants/grpc-server:v0.1 
+  docker push nishants/grpc-server:v0.1 
+  ```
+
+  
