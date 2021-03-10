@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Grpc.Net.Client;
+using GrpcServer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -32,7 +34,20 @@ namespace WebServer
             {
                 endpoints.MapGet("/", async context =>
                 {
-                    await context.Response.WriteAsync("Hello World!");
+                  using var channel = GrpcChannel.ForAddress(Environment.GetEnvironmentVariable("GrpcServer"));
+      
+                  // Greeter service is defined in hello.proto
+                  // <service-name>.<service-name>Client is auto-created
+                  var client = new Greeter.GreeterClient(channel);
+      
+                  // HelloRequest is defined in hello.proto
+                  var request = new HelloRequest();
+                  request.Name = "Nishant";
+      
+                  // SayHello method is defined in hello.proto
+                  var response = client.SayHello(request);
+
+                    await context.Response.WriteAsync(response.Message);
                 });
             });
         }
