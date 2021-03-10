@@ -25,6 +25,41 @@
 
   
 
+### Create dockerfile for server 
+
+```dockerfile
+FROM mcr.microsoft.com/dotnet/sdk:5.0-focal AS build
+WORKDIR /source
+
+COPY ./*.csproj .
+RUN dotnet restore
+
+COPY . .
+RUN dotnet publish -c release -o /app --no-restore
+
+FROM mcr.microsoft.com/dotnet/aspnet:5.0-focal
+WORKDIR /app
+
+COPY --from=build /app .
+
+EXPOSE 80  
+ENTRYPOINT ["dotnet", "GrpcServer.dll"]
+```
+
+Create docker image : 
+
+```bash
+cd GrpcServer
+docker build -t grpc-server .
+
+# Run and check server
+docker run -p 5001:80 grpc-server
+```
+
+
+
+### Create grpc client in web-server
+
 - Add grpc client library to WebServer
 
   ```bash
@@ -77,13 +112,39 @@
     });
   ```
 
+
+
+- Add a dockerfile to web-server
+
+  ```dockerfile
+  FROM mcr.microsoft.com/dotnet/sdk:5.0-focal AS build
+  WORKDIR /source
   
-
-- Create dockerfile for server 
-
-  ```bash
-  cd GrpcServer
-  docker build -t grpc-server .
+  COPY ./*.csproj .
+  RUN dotnet restore
+  
+  COPY . .
+  RUN dotnet publish -c release -o /app --no-restore
+  
+  FROM mcr.microsoft.com/dotnet/aspnet:5.0-focal
+  WORKDIR /app
+  
+  COPY --from=build /app .
+  
+  EXPOSE 80  
+  ENTRYPOINT ["dotnet", "WebServer.dll"]
   ```
 
-- 
+  
+
+- Create docker file 
+
+  ```bash
+  docker build -t web-server .
+  
+  # Run and check
+  docker run -p 5002:80 -e GrpcServer="http://host.docker.internal:5001" web-server
+  ```
+
+  
+
