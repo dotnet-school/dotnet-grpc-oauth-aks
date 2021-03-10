@@ -26,4 +26,14 @@
 
   
 
-- 
+- Add grpc client library to WebServer
+
+  ```
+  dotnet add WebServer/WebServer.csproj package Grpc.Net.Client
+  dotnet add WebServer/WebServer.csproj package Google.Protobuf
+  dotnet add WebServer/WebServer.csproj package Grpc.Tools
+  ```
+
+  
+
+- Move 
